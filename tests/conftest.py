@@ -2,7 +2,7 @@
 
 import platform
 
-from house_price import PROJECT_DIR
+from hotel_reserves import PROJECT_DIR
 
 MLRUNS_DIR = PROJECT_DIR / "tests" / "mlruns"
 CATALOG_DIR = PROJECT_DIR / "tests" / "catalog"
