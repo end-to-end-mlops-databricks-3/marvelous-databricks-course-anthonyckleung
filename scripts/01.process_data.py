@@ -4,12 +4,14 @@ import yaml
 from loguru import logger
 from pyspark.sql import SparkSession
 
-from house_price.config import ProjectConfig
-from house_price.data_processor import DataProcessor, generate_synthetic_data
+# from house_price.config import ProjectConfig
+# from house_price.data_processor import DataProcessor, generate_synthetic_data
+from hotel_reserves.config import ProjectConfig
+from hotel_reserves.data_processor import DataProcessor
 from marvelous.logging import setup_logging
 from marvelous.timer import Timer
 
-config_path = f"../project_config.yml"
+config_path = f"../project_config_hotel.yml"
 
 config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
 
@@ -23,7 +25,7 @@ logger.info(yaml.dump(config, default_flow_style=False))
 spark = SparkSession.builder.getOrCreate()
 
 df = spark.read.csv(
-    f"/Volumes/{config.catalog_name}/{config.schema_name}/data/data.csv", header=True, inferSchema=True
+    f"/Volumes/{config.catalog_name}/{config.schema_name}/ackl/hotel.csv", header=True, inferSchema=True
 ).toPandas()
 
 # Preprocess the data
