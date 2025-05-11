@@ -39,6 +39,6 @@ uv sync --extra dev
 
 
 # Data
-Using the [**House Price Dataset**](https://www.kaggle.com/c/house-prices-advanced-regression-techniques/data) from Kaggle.
+Using the [**Hotel Reservations**](https://www.kaggle.com/code/devraai/hotel-reservations-classification-analysis) from Kaggle.
 
 This data can be used to build a classification model to calculate house price.
