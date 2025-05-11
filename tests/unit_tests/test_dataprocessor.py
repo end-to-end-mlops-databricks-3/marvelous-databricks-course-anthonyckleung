@@ -77,6 +77,22 @@ def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spar
     assert set(processor.df.columns) == set(expected_columns)
 
 
+def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
+    """Test missing value handling in the DataProcessor.
+
+    This function verifies that missing values are handled correctly for
+    booking_status columns.
+
+    :param sample_data: Input DataFrame containing sample data
+    :param config: Configuration object for the project
+    :param spark: SparkSession object
+    """
+    processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
+    processor.preprocess()
+
+    assert processor.df["booking_status"].isna().sum() == 0
+
+
 def test_split_data_default_params(
     sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession
 ) -> None:
