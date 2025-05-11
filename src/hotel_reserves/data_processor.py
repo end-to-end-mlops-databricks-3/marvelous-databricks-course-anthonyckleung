@@ -1,13 +1,11 @@
 """Data preprocessing module."""
 
-import datetime
-
+import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
 
-# from house_price.config import ProjectConfig
 from hotel_reserves.config import ProjectConfig
 
 
@@ -27,13 +25,12 @@ class DataProcessor:
 
         This method handles missing values, converts data types, and performs feature engineering.
         """
-
         # Create cyclical representations of arrival_month
-        df['arrival_month_sin'] = np.sin(2 * np.pi * df["arrival_month"] / 12)
-        df['arrival_month_cos'] = np.cos(2 * np.pi * df["arrival_month"] / 12)
+        self.df["arrival_month_sin"] = np.sin(2 * np.pi * self.df["arrival_month"] / 12)
+        self.df["arrival_month_cos"] = np.cos(2 * np.pi * self.df["arrival_month"] / 12)
 
         # Handle numeric features
-        num_features = self.config.num_features + ['arrival_month_sin', 'arrival_month_cos']
+        num_features = self.config.num_features + ["arrival_month_sin", "arrival_month_cos"]
         for col in num_features:
             self.df[col] = pd.to_numeric(self.df[col], errors="coerce")
 
