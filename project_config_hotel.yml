@@ -1,0 +1,43 @@
+prd:
+  catalog_name: mlops_prd
+  schema_name: anthonyl
+acc:
+  catalog_name: mlops_acc
+  schema_name: anthonyl
+dev:
+  catalog_name: mlops_dev
+  schema_name: anthonyl
+
+parameters:
+  learning_rate: 0.01
+  n_estimators: 1000
+  max_depth: 6
+
+
+meta_columns:
+ - Booking_ID
+
+
+num_features:
+  - no_of_adults
+  - no_of_children
+  - no_of_weekend_nights
+  - no_of_week_nights
+  - required_car_parking_space
+  - lead_time
+  - arrival_year
+  - arrival_month
+  - arrival_date
+  - repeated_guest
+  - no_of_previous_cancellations
+  - no_of_previous_bookings_not_canceled
+  - avg_price_per_room
+  - no_of_special_requests
+
+
+cat_features:
+  - type_of_meal_plan
+  - room_type_reserved
+  - market_segment_type
+
+target: booking_status
