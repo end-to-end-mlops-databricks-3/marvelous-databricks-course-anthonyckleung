@@ -1,14 +1,3 @@
-# Databricks notebook source
-
-# % pip install -e ..
-# %restart_python
-
-# from pathlib import Path
-# import sys
-# sys.path.append(str(Path.cwd().parent / 'src'))
-
-# COMMAND ----------
-
 import pandas as pd
 import yaml
 from loguru import logger
