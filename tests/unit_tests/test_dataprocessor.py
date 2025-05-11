@@ -6,8 +6,8 @@ from conftest import CATALOG_DIR
 from delta.tables import DeltaTable
 from pyspark.sql import SparkSession
 
-from house_price.config import ProjectConfig
-from house_price.data_processor import DataProcessor
+from hotel_reserves.config import ProjectConfig
+from hotel_reserves.data_processor import DataProcessor
 
 
 def test_data_ingestion(sample_data: pd.DataFrame) -> None:
@@ -53,27 +53,9 @@ def test_column_transformations(sample_data: pd.DataFrame, config: ProjectConfig
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    assert "GarageYrBlt" not in processor.df.columns
-    assert processor.df["Id"].dtype == "object"
-    assert processor.df["MasVnrType"].dtype == "category"
-
-
-def test_missing_value_handling(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
-    """Test missing value handling in the DataProcessor.
-
-    This function verifies that missing values are handled correctly for
-    LotFrontage, MasVnrType, and MasVnrArea columns.
-
-    :param sample_data: Input DataFrame containing sample data
-    :param config: Configuration object for the project
-    :param spark: SparkSession object
-    """
-    processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
-    processor.preprocess()
-
-    assert processor.df["LotFrontage"].isna().sum() == 0
-    assert (processor.df["MasVnrType"] == "None").sum() > 0
-    assert (processor.df["MasVnrArea"] == 0).sum() > 0
+    assert processor.df["Booking_ID"].dtype == "object"
+    assert processor.df["type_of_meal_plan"].dtype == "category"
+    assert processor.df["market_segment_type"].dtype == "category"
 
 
 def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession) -> None:
@@ -89,7 +71,9 @@ def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spar
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    expected_columns = config.cat_features + config.num_features + [config.target, "Id"]
+    new_columns = ['arrival_month_sin', 'arrival_month_cos']
+
+    expected_columns = config.cat_features + config.num_features + new_columns + [config.target] + config.meta_columns
     assert set(processor.df.columns) == set(expected_columns)
 
 
@@ -136,7 +120,7 @@ def test_preprocess_empty_dataframe(config: ProjectConfig, spark_session: SparkS
 
 
 @pytest.mark.skip(reason="depends on delta tables on Databricks")
-def test_save_to_catalog_succesfull(
+def test_save_to_catalog_succesful(
     sample_data: pd.DataFrame, config: ProjectConfig, spark_session: SparkSession
 ) -> None:
     """Test the successful saving of data to the catalog.
@@ -159,8 +143,8 @@ def test_save_to_catalog_succesfull(
     assert spark_session.catalog.tableExists(f"{config.catalog_name}.{config.schema_name}.test_set")
 
 
-@pytest.mark.skip(reason="depends on delta tables on Databrics")
-@pytest.mark.order(after=test_save_to_catalog_succesfull)
+@pytest.mark.skip(reason="depends on delta tables on Databricks")
+@pytest.mark.order(after=test_save_to_catalog_succesful)
 def test_delta_table_property_of_enableChangeDataFeed_check(config: ProjectConfig, spark_session: SparkSession) -> None:
     """Check if Change Data Feed is enabled for train and test sets.
 
