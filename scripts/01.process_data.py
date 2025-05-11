@@ -4,8 +4,6 @@ from marvelous.logging import setup_logging
 from marvelous.timer import Timer
 from pyspark.sql import SparkSession
 
-# from house_price.config import ProjectConfig
-# from house_price.data_processor import DataProcessor, generate_synthetic_data
 from hotel_reserves.config import ProjectConfig
 from hotel_reserves.data_processor import DataProcessor
 
