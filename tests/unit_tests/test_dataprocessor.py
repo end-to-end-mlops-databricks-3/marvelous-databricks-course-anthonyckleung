@@ -71,7 +71,7 @@ def test_column_selection(sample_data: pd.DataFrame, config: ProjectConfig, spar
     processor = DataProcessor(pandas_df=sample_data, config=config, spark=spark_session)
     processor.preprocess()
 
-    new_columns = ['arrival_month_sin', 'arrival_month_cos']
+    new_columns = ["arrival_month_sin", "arrival_month_cos"]
 
     expected_columns = config.cat_features + config.num_features + new_columns + [config.target] + config.meta_columns
     assert set(processor.df.columns) == set(expected_columns)
