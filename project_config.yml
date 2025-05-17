@@ -15,7 +15,7 @@ experiment_name_custom: /Shared/hotel-reserves-custom
 
 parameters:
   learning_rate: 0.01
-  n_estimators: 1000
+  n_estimators: 200
   max_depth: 6
 
 
