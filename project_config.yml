@@ -8,6 +8,11 @@ dev:
   catalog_name: mlops_dev
   schema_name: anthonyl
 
+
+experiment_name_basic: /Shared/hotel-reserves-basic
+experiment_name_custom: /Shared/hotel-reserves-custom
+
+
 parameters:
   learning_rate: 0.01
   n_estimators: 1000
