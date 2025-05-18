@@ -34,9 +34,9 @@ custom_model.train()
 custom_model.log_model()
 
 # COMMAND ----------
-run_id = mlflow.search_runs(experiment_names=["/Shared/house-prices-custom"]).run_id[0]
+run_id = mlflow.search_runs(experiment_names=["/Users/anthonyleung124@gmail.com/hotel-reserves-custom"]).run_id[0]
 
-model = mlflow.pyfunc.load_model(f"runs:/{run_id}/pyfunc-house-price-model")
+model = mlflow.pyfunc.load_model(f"runs:/{run_id}/pyfunc-hotel-reserves-model")
 
 # COMMAND ----------
 # Retrieve dataset for the current run
