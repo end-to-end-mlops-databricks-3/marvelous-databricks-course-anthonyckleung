@@ -97,3 +97,6 @@ dmypy.json
 .history
 
 .databricks
+
+# pytest
+tests/mlruns/
