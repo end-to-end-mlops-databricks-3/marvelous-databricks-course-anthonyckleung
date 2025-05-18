@@ -9,8 +9,8 @@ dev:
   schema_name: anthonyl
 
 
-experiment_name_basic: /Shared/hotel-reserves-basic
-experiment_name_custom: /Shared/hotel-reserves-custom
+experiment_name_basic: /Users/anthonyleung124@gmail.com/hotel-reserves-basic
+experiment_name_custom: /Users/anthonyleung124@gmail.com/hotel-reserves-custom
 
 
 parameters:
