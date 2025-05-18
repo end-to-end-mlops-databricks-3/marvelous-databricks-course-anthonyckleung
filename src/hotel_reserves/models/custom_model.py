@@ -27,7 +27,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 from hotel_reserves.config import ProjectConfig, Tags
-from hotel_reserves.utils import adjust_predictions
+# from hotel_reserves.utils import adjust_predictions
 
 
 class HotelReservesModelWrapper(mlflow.pyfunc.PythonModel):
@@ -56,9 +56,9 @@ class HotelReservesModelWrapper(mlflow.pyfunc.PythonModel):
         predictions = self.model.predict(model_input)
         logger.info(f"predictions: {predictions}")
         # looks like {"Prediction": 10000.0}
-        adjusted_predictions = adjust_predictions(predictions)
-        logger.info(f"adjusted_predictions: {adjusted_predictions}")
-        return adjusted_predictions
+        # adjusted_predictions = adjust_predictions(predictions)
+        # logger.info(f"adjusted_predictions: {adjusted_predictions}")
+        return predictions
 
 
 class CustomModel:
@@ -133,6 +133,7 @@ class CustomModel:
 
         This method evaluates the model, logs parameters and metrics, and saves the model in MLflow.
         """
+        
         mlflow.set_experiment(self.experiment_name)
         additional_pip_deps = ["pyspark==3.5.0"]
         for package in self.code_paths:
@@ -152,19 +153,12 @@ class CustomModel:
             logger.info(f"📊 F1 Score: {f1}")
             logger.info(f"📊 Log Loss: {logloss}")
 
-            # logger.info(f"📊 Mean Squared Error: {mse}")
-            # logger.info(f"📊 Mean Absolute Error: {mae}")
-            # logger.info(f"📊 R2 Score: {r2}")
-
             # Log parameters and metrics
             mlflow.log_param("model_type", "LightGBM with preprocessing")
             mlflow.log_params(self.parameters)
             mlflow.log_metric("roc_auc", roc_auc)
             mlflow.log_metric("f1", f1)
             mlflow.log_metric("logloss", logloss)
-            # mlflow.log_metric("mse", mse)
-            # mlflow.log_metric("mae", mae)
-            # mlflow.log_metric("r2_score", r2)
 
             # Log the model
             signature = infer_signature(model_input=self.X_train, model_output=self.pipeline.predict(self.X_train))
