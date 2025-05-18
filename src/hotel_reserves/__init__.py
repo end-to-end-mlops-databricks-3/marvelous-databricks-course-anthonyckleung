@@ -9,6 +9,7 @@ PROJECT_DIR = (THIS_DIR / "../..").resolve()
 
 print("PROJECT_DIR:", PROJECT_DIR)
 
+
 def get_version() -> str:
     """Retrieve the version of the package.
 

@@ -22,11 +22,12 @@ from mlflow.models import infer_signature
 from mlflow.utils.environment import _mlflow_conda_env
 from pyspark.sql import SparkSession
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import f1_score, roc_auc_score, log_loss
+from sklearn.metrics import f1_score, log_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 from hotel_reserves.config import ProjectConfig, Tags
+
 # from hotel_reserves.utils import adjust_predictions
 
 
@@ -133,7 +134,6 @@ class CustomModel:
 
         This method evaluates the model, logs parameters and metrics, and saves the model in MLflow.
         """
-        
         mlflow.set_experiment(self.experiment_name)
         additional_pip_deps = ["pyspark==3.5.0"]
         for package in self.code_paths:
