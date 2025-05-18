@@ -5,7 +5,7 @@ import importlib.resources
 from pathlib import Path
 
 THIS_DIR = Path(__file__).parent
-PROJECT_DIR = (THIS_DIR / "../..").resolve()
+PROJECT_DIR = (THIS_DIR / "../../..").resolve()
 
 
 def get_version() -> str:
@@ -21,7 +21,7 @@ def get_version() -> str:
         return importlib.metadata.version(__package__)
     except importlib.metadata.PackageNotFoundError:
         # If not installed, read from the version.txt file
-        with importlib.resources.files(__package__).joinpath("../../version.txt").open("r", encoding="utf-8") as file:
+        with importlib.resources.files(__package__).joinpath("../../../version.txt").open("r", encoding="utf-8") as file:
             return file.read().strip()
 
 
