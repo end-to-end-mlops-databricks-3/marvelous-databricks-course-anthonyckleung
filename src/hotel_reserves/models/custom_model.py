@@ -27,8 +27,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 from hotel_reserves.config import ProjectConfig, Tags
-
-# from hotel_reserves.utils import adjust_predictions
+from hotel_reserves.utils import adjust_predictions
 
 
 class HotelReservesModelWrapper(mlflow.pyfunc.PythonModel):
@@ -57,9 +56,9 @@ class HotelReservesModelWrapper(mlflow.pyfunc.PythonModel):
         predictions = self.model.predict(model_input)
         logger.info(f"predictions: {predictions}")
         # looks like {"Prediction": 10000.0}
-        # adjusted_predictions = adjust_predictions(predictions)
+        adjusted_predictions = adjust_predictions(predictions)
         # logger.info(f"adjusted_predictions: {adjusted_predictions}")
-        return predictions
+        return adjusted_predictions
 
 
 class CustomModel:
