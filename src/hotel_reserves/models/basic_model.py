@@ -50,7 +50,7 @@ class BasicModel:
         self.catalog_name = self.config.catalog_name
         self.schema_name = self.config.schema_name
         self.experiment_name = self.config.experiment_name_basic
-        self.model_name = f"{self.catalog_name}.{self.schema_name}.house_prices_model_basic"
+        self.model_name = f"{self.catalog_name}.{self.schema_name}.hotel_reserves_model_basic"
         self.tags = tags.dict()
 
     def load_data(self) -> None:
@@ -100,9 +100,9 @@ class BasicModel:
             y_pred = self.pipeline.predict(self.X_test)
 
             # Evaluate metrics
-            roc_auc = roc_auc_score(self.y_test, self.y_pred)
-            f1 = f1_score(self.y_test, self.y_train)
-            logloss = log_loss(self.y_test, self.y_pred)
+            roc_auc = roc_auc_score(self.y_test, y_pred)
+            f1 = f1_score(self.y_test, y_pred)
+            logloss = log_loss(self.y_test, y_pred)
 
             logger.info(f"📊 ROC AUC Score: {roc_auc}")
             logger.info(f"📊 F1 Score: {f1}")
