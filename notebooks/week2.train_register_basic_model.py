@@ -3,8 +3,8 @@
 import mlflow
 from pyspark.sql import SparkSession
 
-from house_price.config import ProjectConfig, Tags
-from house_price.models.basic_model import BasicModel
+from hotel_reserves.config import ProjectConfig, Tags
+from hotel_reserves.models.basic_model import BasicModel
 
 from dotenv import load_dotenv
 from marvelous.common import is_databricks
@@ -18,15 +18,16 @@ if not is_databricks():
     profile = os.environ["PROFILE"]
     mlflow.set_tracking_uri(f"databricks://{profile}")
     mlflow.set_registry_uri(f"databricks-uc://{profile}")
+# COMMAND ----------
 
-
-config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="prd")
+config = ProjectConfig.from_yaml(config_path="../project_config.yml", env="dev")
 spark = SparkSession.builder.getOrCreate()
 tags = Tags(**{"git_sha": "abcd12345", "branch": "week2"})
 
 # COMMAND ----------
 # Initialize model with the config path
 basic_model = BasicModel(config=config, tags=tags, spark=spark)
+print(basic_model.catalog_name)
 
 # COMMAND ----------
 basic_model.load_data()
@@ -39,7 +40,7 @@ basic_model.log_model()
 
 # COMMAND ----------
 run_id = mlflow.search_runs(
-    experiment_names=["/Shared/house-prices-basic"], filter_string="tags.branch='week2'"
+    experiment_names=["/Users/anthonyleung124@gmail.com/hotel-reserves-basic"], filter_string="tags.branch='week2'"
 ).run_id[0]
 
 model = mlflow.sklearn.load_model(f"runs:/{run_id}/lightgbm-pipeline-model")

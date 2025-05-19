@@ -6,7 +6,7 @@ from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
 from hotel_reserves.config import ProjectConfig, Tags
-from hotel_reserves.models.custom_model import CustomModel
+from hotel_reserves.models.basic_model import BasicModel
 
 # Configure tracking uri
 mlflow.set_tracking_uri("databricks")
@@ -66,20 +66,18 @@ tags_dict = {"git_sha": args.git_sha, "branch": args.branch}
 tags = Tags(**tags_dict)
 
 # Initialize model
-custom_model = CustomModel(
-    config=config, tags=tags, spark=spark, code_paths=["../dist/hotel_reserves-1.0.1-py3-none-any.whl"]
-)
+basic_model = BasicModel(config=config, tags=tags, spark=spark)
 logger.info("Model initialized.")
 
 # Load data and prepare features
-custom_model.load_data()
-custom_model.prepare_features()
+basic_model.load_data()
+basic_model.prepare_features()
 logger.info("Loaded data, prepared features.")
 
 # Train + log the model (runs everything including MLflow logging)
-custom_model.train()
-custom_model.log_model()
+basic_model.train()
+basic_model.log_model()
 logger.info("Model training completed.")
 
-custom_model.register_model()
+basic_model.register_model()
 logger.info("Registered model")
