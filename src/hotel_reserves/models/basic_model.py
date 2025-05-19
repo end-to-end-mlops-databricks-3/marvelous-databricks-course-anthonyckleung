@@ -9,6 +9,8 @@ parameters → Hyperparameters for LightGBM.
 catalog_name, schema_name → Database schema names for Databricks tables.
 """
 
+from typing import Literal
+
 import mlflow
 import numpy as np
 import pandas as pd
@@ -91,7 +93,7 @@ class BasicModel:
         logger.info("🚀 Starting training...")
         self.pipeline.fit(self.X_train, self.y_train)
 
-    def log_model(self) -> None:
+    def log_model(self, dataset_type: Literal["PandasDataset", "SparkDataset"] = "SparkDataset") -> None:
         """Log the model using MLflow."""
         mlflow.set_experiment(self.experiment_name)
         with mlflow.start_run(tags=self.tags) as run:
@@ -117,11 +119,24 @@ class BasicModel:
 
             # Log the model
             signature = infer_signature(model_input=self.X_train, model_output=y_pred)
-            dataset = mlflow.data.from_spark(
-                self.train_set_spark,
-                table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
-                version=self.data_version,
-            )
+            # dataset = mlflow.data.from_spark(
+            #     self.train_set_spark,
+            #     table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
+            #     version=self.data_version,
+            # )
+            if dataset_type == "PandasDataset":
+                dataset = mlflow.data.from_pandas(
+                    self.train_set,
+                    name="train_set",
+                )
+            elif dataset_type == "SparkDataset":
+                dataset = mlflow.data.from_spark(
+                    self.train_set_spark,
+                    table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
+                    version=self.data_version,
+                )
+            else:
+                raise ValueError("Unsupported dataset type.")
             mlflow.log_input(dataset, context="training")
             mlflow.sklearn.log_model(
                 sk_model=self.pipeline, artifact_path="lightgbm-pipeline-model", signature=signature
