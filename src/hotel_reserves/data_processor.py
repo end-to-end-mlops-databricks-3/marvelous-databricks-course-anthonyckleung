@@ -47,6 +47,9 @@ class DataProcessor:
         for col in meta:
             self.df[col] = self.df[col].astype("str")
 
+        # Convert target into 1 or 0
+        self.df[target] = self.df[target].map({"Not_Canceled": 0, "Canceled": 1})
+
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
 

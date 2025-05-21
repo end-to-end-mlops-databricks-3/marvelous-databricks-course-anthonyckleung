@@ -8,10 +8,15 @@ dev:
   catalog_name: mlops_dev
   schema_name: anthonyl
 
+
+experiment_name_basic: /Users/anthonyleung124@gmail.com/hotel-reserves-basic
+experiment_name_custom: /Users/anthonyleung124@gmail.com/hotel-reserves-custom
+
+
 parameters:
   learning_rate: 0.01
-  n_estimators: 1000
-  max_depth: 6
+  n_estimators: 200
+  max_depth: 5
 
 
 meta_columns:

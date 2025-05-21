@@ -20,6 +20,8 @@ class ProjectConfig(BaseModel):
     catalog_name: str
     schema_name: str
     parameters: dict[str, Any]
+    experiment_name_basic: str | None
+    experiment_name_custom: str | None
 
     @classmethod
     def from_yaml(cls, config_path: str, env: str = "dev") -> "ProjectConfig":
@@ -48,4 +50,4 @@ class Tags(BaseModel):
 
     git_sha: str
     branch: str
-    job_run_id: str
+    # job_run_id: str
