@@ -6,19 +6,19 @@ import mlflow
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
 from databricks.sdk import WorkspaceClient
-from lightgbm import LGBMRegressor
+from lightgbm import LGBMClassifier
 from loguru import logger
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.metrics import roc_auc_score, f1_score, log_loss
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
-from house_price.config import ProjectConfig, Tags
-
+# from house_price.config import ProjectConfig, Tags
+from hotel_reserves.config import ProjectConfig, Tags
 
 class FeatureLookUpModel:
     """A class to manage FeatureLookupModel."""
@@ -39,8 +39,8 @@ class FeatureLookUpModel:
         self.schema_name = self.config.schema_name
 
         # Define table names and function name
-        self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.house_features"
-        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_house_age"
+        self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_booking_features"
+        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_hotel_guests"
 
         # MLflow configuration
         self.experiment_name = self.config.experiment_name_fe
@@ -53,16 +53,16 @@ class FeatureLookUpModel:
         """
         self.spark.sql(f"""
         CREATE OR REPLACE TABLE {self.feature_table_name}
-        (Id STRING NOT NULL, OverallQual INT, GrLivArea INT, GarageCars INT);
+        (Booking_ID STRING NOT NULL, no_of_adults INT, no_of_children INT, no_of_week_nights INT, lead_time INT);
         """)
-        self.spark.sql(f"ALTER TABLE {self.feature_table_name} ADD CONSTRAINT house_pk PRIMARY KEY(Id);")
+        self.spark.sql(f"ALTER TABLE {self.feature_table_name} ADD CONSTRAINT booking_pk PRIMARY KEY(Id);")
         self.spark.sql(f"ALTER TABLE {self.feature_table_name} SET TBLPROPERTIES (delta.enableChangeDataFeed = true);")
 
         self.spark.sql(
-            f"INSERT INTO {self.feature_table_name} SELECT Id, OverallQual, GrLivArea, GarageCars FROM {self.catalog_name}.{self.schema_name}.train_set"
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, no_of_week_nights, lead_time FROM {self.catalog_name}.{self.schema_name}.train_set"
         )
         self.spark.sql(
-            f"INSERT INTO {self.feature_table_name} SELECT Id, OverallQual, GrLivArea, GarageCars FROM {self.catalog_name}.{self.schema_name}.test_set"
+            f"INSERT INTO {self.feature_table_name} SELECT Booking_ID, no_of_adults, no_of_children, no_of_week_nights, lead_time FROM {self.catalog_name}.{self.schema_name}.test_set"
         )
         logger.info("✅ Feature table created and populated.")
 
@@ -72,12 +72,11 @@ class FeatureLookUpModel:
         This function subtracts the year built from the current year.
         """
         self.spark.sql(f"""
-        CREATE OR REPLACE FUNCTION {self.function_name}(year_built INT)
+        CREATE OR REPLACE FUNCTION {self.function_name}(no_of_adults INT, no_of_children INT)
         RETURNS INT
         LANGUAGE PYTHON AS
         $$
-        from datetime import datetime
-        return datetime.now().year - year_built
+        return no_of_adults + no_of_children
         $$
         """)
         logger.info("✅ Feature function defined.")
@@ -87,13 +86,14 @@ class FeatureLookUpModel:
 
         Drops specified columns and casts 'YearBuilt' to integer type.
         """
+        lookup_features = ["no_of_adults", "no_of_children", "no_of_week_nights", "lead_time"]
         self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(
-            "OverallQual", "GrLivArea", "GarageCars"
+            *lookup_features
         )
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set").toPandas()
 
-        self.train_set = self.train_set.withColumn("YearBuilt", self.train_set["YearBuilt"].cast("int"))
-        self.train_set = self.train_set.withColumn("Id", self.train_set["Id"].cast("string"))
+        # self.train_set = self.train_set.withColumn("YearBuilt", self.train_set["YearBuilt"].cast("int"))
+        self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_Id"].cast("string"))
 
         logger.info("✅ Data successfully loaded.")
 
@@ -102,31 +102,32 @@ class FeatureLookUpModel:
 
         Creates a training set using FeatureLookup and FeatureFunction.
         """
+        lookup_features = ["no_of_adults", "no_of_children", "no_of_week_nights", "lead_time"]
         self.training_set = self.fe.create_training_set(
             df=self.train_set,
             label=self.target,
             feature_lookups=[
                 FeatureLookup(
                     table_name=self.feature_table_name,
-                    feature_names=["OverallQual", "GrLivArea", "GarageCars"],
-                    lookup_key="Id",
+                    feature_names=lookup_features,
+                    lookup_key="Booking_ID",
                 ),
                 FeatureFunction(
                     udf_name=self.function_name,
-                    output_name="house_age",
-                    input_bindings={"year_built": "YearBuilt"},
+                    output_name="total_guest",
+                    input_bindings={"no_of_adults": "no_of_adults", "no_of_children": "no_of_children" },
                 ),
             ],
             exclude_columns=["update_timestamp_utc"],
         )
 
         self.training_df = self.training_set.load_df().toPandas()
-        current_year = datetime.now().year
-        self.test_set["house_age"] = current_year - self.test_set["YearBuilt"]
+        # current_year = datetime.now().year
+        # self.test_set["total_guest"] = current_year - self.test_set["YearBuilt"]
 
-        self.X_train = self.training_df[self.num_features + self.cat_features + ["house_age"]]
+        self.X_train = self.training_df[self.num_features + self.cat_features + ["total_guest"]]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.num_features + self.cat_features + ["house_age"]]
+        self.X_test = self.test_set[self.num_features + self.cat_features + ["total_guest"]]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
@@ -142,7 +143,7 @@ class FeatureLookUpModel:
             transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), self.cat_features)], remainder="passthrough"
         )
 
-        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", LGBMRegressor(**self.parameters))])
+        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", LGBMClassifier(**self.parameters))])
 
         mlflow.set_experiment(self.experiment_name)
 
@@ -151,19 +152,15 @@ class FeatureLookUpModel:
             pipeline.fit(self.X_train, self.y_train)
             y_pred = pipeline.predict(self.X_test)
 
-            mse = mean_squared_error(self.y_test, y_pred)
-            mae = mean_absolute_error(self.y_test, y_pred)
-            r2 = r2_score(self.y_test, y_pred)
-
-            logger.info(f"📊 Mean Squared Error: {mse}")
-            logger.info(f"📊 Mean Absolute Error: {mae}")
-            logger.info(f"📊 R2 Score: {r2}")
+            roc_auc = roc_auc_score(self.y_test, y_pred)
+            f1 = f1_score(self.y_test, y_pred)
+            logloss = log_loss(self.y_test, y_pred)
 
             mlflow.log_param("model_type", "LightGBM with preprocessing")
             mlflow.log_params(self.parameters)
-            mlflow.log_metric("mse", mse)
-            mlflow.log_metric("mae", mae)
-            mlflow.log_metric("r2_score", r2)
+            mlflow.log_metric("roc_auc", roc_auc)
+            mlflow.log_metric("f1", f1)
+            mlflow.log_metric("logloss", logloss)
             signature = infer_signature(self.X_train, y_pred)
 
             self.fe.log_model(
@@ -181,7 +178,7 @@ class FeatureLookUpModel:
         """
         registered_model = mlflow.register_model(
             model_uri=f"runs:/{self.run_id}/lightgbm-pipeline-model-fe",
-            name=f"{self.catalog_name}.{self.schema_name}.house_prices_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_reserves_model_fe",
             tags=self.tags,
         )
 
@@ -190,7 +187,7 @@ class FeatureLookUpModel:
 
         client = MlflowClient()
         client.set_registered_model_alias(
-            name=f"{self.catalog_name}.{self.schema_name}.house_prices_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_reserves_model_fe",
             alias="latest-model",
             version=latest_version,
         )
