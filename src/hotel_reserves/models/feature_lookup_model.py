@@ -38,8 +38,8 @@ class FeatureLookUpModel:
         self.schema_name = self.config.schema_name
 
         # Define table names and function name
-        self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_booking_features"
-        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_hotel_guests"
+        self.feature_table_name = f"{self.catalog_name}.{self.schema_name}.hotel_reserves_features_demo"
+        self.function_name = f"{self.catalog_name}.{self.schema_name}.calculate_hotel_bookings_demo"
 
         # MLflow configuration
         self.experiment_name = self.config.experiment_name_fe
