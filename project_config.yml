@@ -11,7 +11,7 @@ dev:
 
 experiment_name_basic: /Users/anthonyleung124@gmail.com/hotel-reserves-basic
 experiment_name_custom: /Users/anthonyleung124@gmail.com/hotel-reserves-custom
-
+experiment_name_fe: /Users/anthonyleung124@gmail.com/hotel-reserves-fe
 
 parameters:
   learning_rate: 0.01
