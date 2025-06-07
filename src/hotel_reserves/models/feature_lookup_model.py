@@ -67,9 +67,9 @@ class FeatureLookUpModel:
         logger.info("✅ Feature table created and populated.")
 
     def define_feature_function(self) -> None:
-        """Define a function to calculate the house's age.
+        """Define a function to calculate total guests.
 
-        This function subtracts the year built from the current year.
+        This function adds total adults and total children.
         """
         self.spark.sql(f"""
         CREATE OR REPLACE FUNCTION {self.function_name}(no_of_adults INT, no_of_children INT)
@@ -114,7 +114,7 @@ class FeatureLookUpModel:
                 ),
                 FeatureFunction(
                     udf_name=self.function_name,
-                    output_name="total_guest",
+                    output_name="total_guests",
                     input_bindings={"no_of_adults": "no_of_adults", "no_of_children": "no_of_children" },
                 ),
             ],
@@ -123,11 +123,11 @@ class FeatureLookUpModel:
 
         self.training_df = self.training_set.load_df().toPandas()
         # current_year = datetime.now().year
-        # self.test_set["total_guest"] = current_year - self.test_set["YearBuilt"]
+        # self.test_set["total_guests"] = current_year - self.test_set["YearBuilt"]
 
-        self.X_train = self.training_df[self.num_features + self.cat_features + ["total_guest"]]
+        self.X_train = self.training_df[self.num_features + self.cat_features + ["total_guests"]]
         self.y_train = self.training_df[self.target]
-        self.X_test = self.test_set[self.num_features + self.cat_features + ["total_guest"]]
+        self.X_test = self.test_set[self.num_features + self.cat_features + ["total_guests"]]
         self.y_test = self.test_set[self.target]
 
         logger.info("✅ Feature engineering completed.")
@@ -143,7 +143,7 @@ class FeatureLookUpModel:
             transformers=[("cat", OneHotEncoder(handle_unknown="ignore"), self.cat_features)], remainder="passthrough"
         )
 
-        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("regressor", LGBMClassifier(**self.parameters))])
+        pipeline = Pipeline(steps=[("preprocessor", preprocessor), ("classifier", LGBMClassifier(**self.parameters))])
 
         mlflow.set_experiment(self.experiment_name)
 
@@ -178,7 +178,7 @@ class FeatureLookUpModel:
         """
         registered_model = mlflow.register_model(
             model_uri=f"runs:/{self.run_id}/lightgbm-pipeline-model-fe",
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_reserves_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe",
             tags=self.tags,
         )
 
@@ -187,7 +187,7 @@ class FeatureLookUpModel:
 
         client = MlflowClient()
         client.set_registered_model_alias(
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_reserves_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe",
             alias="latest-model",
             version=latest_version,
         )
@@ -201,7 +201,7 @@ class FeatureLookUpModel:
         :param X: DataFrame containing the input features.
         :return: DataFrame containing the predictions.
         """
-        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.house_prices_model_fe@latest-model"
+        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe@latest-model"
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         return predictions
