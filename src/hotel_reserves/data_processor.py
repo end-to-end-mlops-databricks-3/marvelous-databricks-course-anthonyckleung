@@ -1,4 +1,5 @@
 """Data preprocessing module."""
+
 import time
 
 import numpy as np
@@ -98,6 +99,7 @@ class DataProcessor:
             "SET TBLPROPERTIES (delta.enableChangeDataFeed = true);"
         )
 
+
 def generate_synthetic_data(df: pd.DataFrame, drift: bool = False, num_rows: int = 500) -> pd.DataFrame:
     """Generate synthetic data matching input DataFrame distributions with optional drift.
 
@@ -120,7 +122,7 @@ def generate_synthetic_data(df: pd.DataFrame, drift: bool = False, num_rows: int
                 synthetic_data[column] = np.random.randint(df[column].min(), df[column].max() + 1, num_rows)
             else:
                 synthetic_data[column] = np.random.normal(df[column].mean(), df[column].std(), num_rows)
-              
+
         elif pd.api.types.is_categorical_dtype(df[column]) or pd.api.types.is_object_dtype(df[column]):
             synthetic_data[column] = np.random.choice(
                 df[column].unique(), num_rows, p=df[column].value_counts(normalize=True)
@@ -151,7 +153,7 @@ def generate_synthetic_data(df: pd.DataFrame, drift: bool = False, num_rows: int
         "repeated_guest",
         "no_of_previous_cancellations",
         "no_of_previous_bookings_not_canceled",
-        "no_of_special_requests"
+        "no_of_special_requests",
     }
     for col in int_columns.intersection(df.columns):
         synthetic_data[col] = synthetic_data[col].astype(np.int64)

@@ -12,8 +12,6 @@ from databricks.sdk.service.catalog import (
 from databricks.sdk.service.serving import EndpointCoreConfigInput, ServedEntityInput
 from loguru import logger
 
-from hotel_reserves.config import ProjectConfig
-
 
 class FeatureLookupServing:
     """Manage Feature Lookup Serving operations."""

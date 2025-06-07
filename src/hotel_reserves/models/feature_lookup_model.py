@@ -1,7 +1,5 @@
 """FeatureLookUp model implementation."""
 
-from datetime import datetime
-
 import mlflow
 from databricks import feature_engineering
 from databricks.feature_engineering import FeatureFunction, FeatureLookup
@@ -11,14 +9,14 @@ from loguru import logger
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
 from sklearn.compose import ColumnTransformer
-from sklearn.metrics import roc_auc_score, f1_score, log_loss
+from sklearn.metrics import f1_score, log_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 # from house_price.config import ProjectConfig, Tags
 from hotel_reserves.config import ProjectConfig, Tags
+
 
 class FeatureLookUpModel:
     """A class to manage FeatureLookupModel."""
@@ -87,9 +85,7 @@ class FeatureLookUpModel:
         Drops specified columns and casts 'YearBuilt' to integer type.
         """
         lookup_features = ["no_of_adults", "no_of_children", "no_of_week_nights", "lead_time"]
-        self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(
-            *lookup_features
-        )
+        self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(*lookup_features)
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set").toPandas()
 
         # self.train_set = self.train_set.withColumn("YearBuilt", self.train_set["YearBuilt"].cast("int"))
@@ -115,7 +111,7 @@ class FeatureLookUpModel:
                 FeatureFunction(
                     udf_name=self.function_name,
                     output_name="total_guests",
-                    input_bindings={"no_of_adults": "no_of_adults", "no_of_children": "no_of_children" },
+                    input_bindings={"no_of_adults": "no_of_adults", "no_of_children": "no_of_children"},
                 ),
             ],
             exclude_columns=["update_timestamp_utc"],

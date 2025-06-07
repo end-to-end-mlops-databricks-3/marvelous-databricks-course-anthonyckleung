@@ -1,15 +1,14 @@
-import argparse
-
+from databricks.sdk import WorkspaceClient
 from loguru import logger
+from marvelous.common import create_parser
 from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
 # from house_price.config import ProjectConfig
 from hotel_reserves.config import ProjectConfig
+
 # from house_price.serving.fe_model_serving import FeatureLookupServing
 from hotel_reserves.serving.fe_model_serving import FeatureLookupServing
-from databricks.sdk import WorkspaceClient
-from marvelous.common import create_parser
 
 args = create_parser()
 
@@ -45,7 +44,7 @@ feature_model_server.deploy_or_update_serving_endpoint(version=model_version)
 logger.info("Started deployment/update of the serving endpoint.")
 
 # Delete endpoint if test
-if is_test==1:
+if is_test == 1:
     workspace = WorkspaceClient()
     workspace.serving_endpoints.delete(name=endpoint_name)
     logger.info("Deleting serving endpoint.")
