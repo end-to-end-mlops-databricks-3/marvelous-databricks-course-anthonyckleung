@@ -27,7 +27,7 @@ endpoint_name = f"hotel-bookings-model-serving-fe-{args.env}"
 
 # Initialize Feature Lookup Serving Manager
 feature_model_server = FeatureLookupServing(
-    model_name=f"{catalog_name}.{schema_name}.hotel_bookings_model_fe",
+    model_name=f"{catalog_name}.{schema_name}.hotel_model_fe_demo",
     endpoint_name=endpoint_name,
     feature_table_name=f"{catalog_name}.{schema_name}.hotel_features",
 )

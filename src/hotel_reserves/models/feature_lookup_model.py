@@ -9,7 +9,6 @@ from loguru import logger
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql import functions as F
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import f1_score, log_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -89,7 +88,6 @@ class FeatureLookUpModel:
         self.train_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.train_set").drop(*lookup_features)
         self.test_set = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set").toPandas()
 
-        # self.train_set = self.train_set.withColumn("YearBuilt", self.train_set["YearBuilt"].cast("int"))
         self.train_set = self.train_set.withColumn("Booking_ID", self.train_set["Booking_Id"].cast("string"))
 
         logger.info("✅ Data successfully loaded.")
@@ -101,7 +99,7 @@ class FeatureLookUpModel:
         """
         lookup_features = ["no_of_adults", "no_of_children", "no_of_week_nights", "lead_time"]
         self.training_set = self.fe.create_training_set(
-            df=self.train_set,
+            df=self.train_set.drop(*lookup_features),
             label=self.target,
             feature_lookups=[
                 FeatureLookup(
@@ -120,7 +118,7 @@ class FeatureLookUpModel:
 
         self.training_df = self.training_set.load_df().toPandas()
         # current_year = datetime.now().year
-        # self.test_set["total_guests"] = current_year - self.test_set["YearBuilt"]
+        self.test_set["total_guests"] = self.test_set["no_of_adults"] + self.test_set["no_of_children"]
 
         self.X_train = self.training_df[self.num_features + self.cat_features + ["total_guests"]]
         self.y_train = self.training_df[self.target]
@@ -175,7 +173,7 @@ class FeatureLookUpModel:
         """
         registered_model = mlflow.register_model(
             model_uri=f"runs:/{self.run_id}/lightgbm-pipeline-model-fe",
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_model_fe_demo",
             tags=self.tags,
         )
 
@@ -184,7 +182,7 @@ class FeatureLookUpModel:
 
         client = MlflowClient()
         client.set_registered_model_alias(
-            name=f"{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe",
+            name=f"{self.catalog_name}.{self.schema_name}.hotel_model_fe_demo",
             alias="latest-model",
             version=latest_version,
         )
@@ -198,7 +196,7 @@ class FeatureLookUpModel:
         :param X: DataFrame containing the input features.
         :return: DataFrame containing the predictions.
         """
-        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.hotel_bookings_model_fe@latest-model"
+        model_uri = f"models:/{self.catalog_name}.{self.schema_name}.hotel_model_fe_demo@latest-model"
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         return predictions
@@ -239,12 +237,11 @@ class FeatureLookUpModel:
     def model_improved(self, test_set: DataFrame) -> bool:
         """Evaluate the model performance on the test set.
 
-        Compares the current model with the latest registered model using MAE.
+        Compares the current model with the latest registered model using Logloss.
         :param test_set: DataFrame containing the test data.
         :return: True if the current model performs better, False otherwise.
         """
         X_test = test_set.drop(self.config.target)
-        # X_test = X_test.withColumn("YearBuilt", F.col("YearBuilt").cast("int"))
 
         predictions_latest = self.load_latest_model_and_predict(X_test).withColumnRenamed(
             "prediction", "prediction_latest"
@@ -260,21 +257,22 @@ class FeatureLookUpModel:
         logger.info("Predictions are ready.")
 
         # Join the DataFrames on the 'id' column
-        df = test_set.join(predictions_current, on="Booking_ID").join(predictions_latest, on="Booking_ID")
+        df = (test_set.join(predictions_current, on="Booking_ID").join(predictions_latest, on="Booking_ID")).toPandas()
 
-        # Calculate the absolute error for each model
-        df = df.withColumn("error_current", F.abs(df["booking_status"] - df["prediction_current"]))
-        df = df.withColumn("error_latest", F.abs(df["booking_status"] - df["prediction_latest"]))
+        # Get labels and predictions
+        y_label = df["booking_status"]
+        y_pred_current = df["prediction_current"]
+        y_pred_latest = df["prediction_latest"]
 
-        # Calculate the Mean Absolute Error (MAE) for each model
-        mae_current = df.agg(F.mean("error_current")).collect()[0][0]
-        mae_latest = df.agg(F.mean("error_latest")).collect()[0][0]
+        # Calculate Log loss for each model
+        logloss_current = log_loss(y_label, y_pred_current)
+        logloss_latest = log_loss(y_label, y_pred_latest)
 
-        # Compare models based on MAE
-        logger.info(f"MAE for Current Model: {mae_current}")
-        logger.info(f"MAE for Latest Model: {mae_latest}")
+        # Compare models based on logloss
+        logger.info(f"Logloss for Current Model: {logloss_current}")
+        logger.info(f"Logloss for Latest Model: {logloss_latest}")
 
-        if mae_current < mae_latest:
+        if logloss_current < logloss_latest:
             logger.info("Current Model performs better.")
             return True
         else:
