@@ -9,6 +9,7 @@ from loguru import logger
 from mlflow.models import infer_signature
 from mlflow.tracking import MlflowClient
 from pyspark.sql import DataFrame, SparkSession
+from pyspark.sql import functions as F
 from sklearn.compose import ColumnTransformer
 from sklearn.metrics import f1_score, log_loss, roc_auc_score
 from sklearn.pipeline import Pipeline
@@ -201,7 +202,7 @@ class FeatureLookUpModel:
 
         predictions = self.fe.score_batch(model_uri=model_uri, df=X)
         return predictions
-    
+
     def update_feature_table(self) -> None:
         """Update the house_features table with the latest records from train and test sets.
 
