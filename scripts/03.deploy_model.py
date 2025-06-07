@@ -4,10 +4,7 @@ from marvelous.common import create_parser
 from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
-# from house_price.config import ProjectConfig
 from hotel_reserves.config import ProjectConfig
-
-# from house_price.serving.fe_model_serving import FeatureLookupServing
 from hotel_reserves.serving.fe_model_serving import FeatureLookupServing
 
 args = create_parser()
