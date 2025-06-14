@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %pip install house_price-1.0.1-py3-none-any.whl
+# MAGIC %pip install hotel_reserves-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 
@@ -15,8 +15,10 @@ import requests
 from pyspark.dbutils import DBUtils
 from pyspark.sql import SparkSession
 
-from house_price.config import ProjectConfig
-from house_price.serving.model_serving import ModelServing
+# from house_price.config import ProjectConfig
+# from house_price.serving.model_serving import ModelServing
+from hotel_reserves.config import ProjectConfig
+from hotel_reserves.serving.model_serving import ModelServing
 
 # spark session
 
@@ -44,9 +46,9 @@ from databricks.sdk.service.serving import (
 )
 
 workspace = WorkspaceClient()
-model_name=f"{catalog_name}.{schema_name}.house_prices_model_custom_db"
-endpoint_name="house-prices-custom-model-serving-db"
-entity_version = '3' # registered model version
+model_name=f"{catalog_name}.{schema_name}.hotel_reserves_model_custom"
+endpoint_name="aleung-hotel-bookings-custom-model-serving-db"
+entity_version = '1' # registered model version
 
 served_entities = [
     ServedEntityInput(
@@ -73,32 +75,26 @@ workspace.serving_endpoints.create(
 
 # Create a sample request body
 required_columns = [
-    "LotFrontage",
-    "LotArea",
-    "OverallCond",
-    "YearBuilt",
-    "YearRemodAdd",
-    "MasVnrArea",
-    "TotalBsmtSF",
-    "MSZoning",
-    "Street",
-    "Alley",
-    "LotShape",
-    "LandContour",
-    "Neighborhood",
-    "Condition1",
-    "BldgType",
-    "HouseStyle",
-    "RoofStyle",
-    "Exterior1st",
-    "Exterior2nd",
-    "MasVnrType",
-    "Foundation",
-    "Heating",
-    "CentralAir",
-    "SaleType",
-    "SaleCondition",
-    "Id",
+    "Booking_ID",
+  "no_of_adults",
+  "no_of_children",
+  "no_of_weekend_nights",
+  "no_of_week_nights",
+  "required_car_parking_space",
+  "lead_time",
+  "arrival_year",
+  "arrival_month",
+  "arrival_month_sin",
+  "arrival_month_cos",
+  "arrival_date",
+  "repeated_guest",
+  "no_of_previous_cancellations",
+  "no_of_previous_bookings_not_canceled",
+  "avg_price_per_room",
+  "no_of_special_requests",
+  "type_of_meal_plan",
+  "room_type_reserved",
+  "market_segment_type"
 ]
 
 spark = SparkSession.builder.getOrCreate()
@@ -136,7 +132,7 @@ def call_endpoint(record):
     """
     Calls the model serving endpoint with a given input record.
     """
-    serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/house-prices-custom-model-serving-db/invocations"
+    serving_endpoint = f"https://{os.environ['DBR_HOST']}/serving-endpoints/aleung-hotel-bookings-custom-model-serving-db/invocations"
 
     response = requests.post(
         serving_endpoint,
