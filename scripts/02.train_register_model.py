@@ -62,7 +62,6 @@ config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
 spark = SparkSession.builder.getOrCreate()
 dbutils = DBUtils(spark)
 tags_dict = {"git_sha": args.git_sha, "branch": args.branch}
-# tags_dict = {"git_sha": args.git_sha, "branch": args.branch, "job_run_id": args.job_run_id}
 tags = Tags(**tags_dict)
 
 # Initialize model
