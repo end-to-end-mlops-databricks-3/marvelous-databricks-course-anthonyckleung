@@ -1,17 +1,20 @@
-import os
-
 import yaml
 from loguru import logger
-from marvelous.timer import Timer
+from marvelous.common import create_parser
 from pyspark.sql import SparkSession
 
 from hotel_reserves.config import ProjectConfig
-from hotel_reserves.data_processor import DataProcessor
+from hotel_reserves.data_processor import DataProcessor, generate_synthetic_data, generate_test_data
 
-base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
-config_path = os.path.join(base_dir, "project_config.yml")
+args = create_parser()
 
-config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
+# base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../"))
+root_path = args.root_path
+# config_path = os.path.join(base_dir, "project_config.yml")
+config_path = f"{root_path}/files/project_config.yml"
+# config = ProjectConfig.from_yaml(config_path=config_path, env="dev")
+config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)
+is_test = args.is_test
 
 logger.info("Configuration loaded:")
 logger.info(yaml.dump(config, default_flow_style=False))
@@ -24,12 +27,21 @@ df = spark.read.csv(
     f"/Volumes/{config.catalog_name}/{config.schema_name}/ackl/hotel.csv", header=True, inferSchema=True
 ).toPandas()
 
-# Preprocess the data
-with Timer() as preprocess_timer:
-    data_processor = DataProcessor(df, config, spark)
-    data_processor.preprocess()
+if is_test == 0:
+    # Generate synthetic data.
+    # This is mimicking a new data arrival. In real world, this would be a new batch of data.
+    # df is passed to infer schema
+    new_data = generate_synthetic_data(df, num_rows=100)
+    logger.info("Synthetic data generated.")
+else:
+    # Generate synthetic data
+    # This is mimicking a new data arrival. This is a valid example for integration testing.
+    new_data = generate_test_data(df, num_rows=100)
+    logger.info("Test data generated.")
 
-logger.info(f"Data preprocessing: {preprocess_timer}")
+# Preprocess the data
+data_processor = DataProcessor(df, config, spark)
+data_processor.preprocess()
 
 # Split the data
 X_train, X_test = data_processor.split_data()
